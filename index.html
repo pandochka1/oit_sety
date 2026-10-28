@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Принципы работы компьютерных сетей — ДУП.03</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f7f8fa;
+    --ink: #1f2937;
+    --muted: #4b5563;
+    --navy: #123a63;
+    --accent: #1e5f8f;
+    --accent-soft: #eaf2f8;
+    --line: #d9dde3;
+    --brand: linear-gradient(135deg, #0f2f52 0%, #123a63 100%);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 17px/1.7 "Georgia", "Times New Roman", serif;
+    -webkit-font-smoothing: antialiased; }
+  body, p, li { text-align: justify; }
+
+  /* header */
+  .hero { background: var(--brand); color: #fff; padding: 3.2rem 1.25rem 2.6rem; }
+  .hero-inner { max-width: 1080px; margin: 0 auto; display: grid; grid-template-columns: 1.4fr 1fr; gap: 2rem; align-items: center; }
+  .hero .course { display:inline-block; font: 600 12px/1 system-ui, sans-serif; letter-spacing:.08em;
+    text-transform:uppercase; background: rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.35);
+    padding:.35rem .75rem; border-radius:999px; margin-bottom:1rem; }
+  .hero h1 { margin: .2rem 0 .7rem; font-size: clamp(1.9rem, 4.2vw, 2.7rem); line-height:1.15; text-align:left; }
+  .hero .lead { color: rgba(255,255,255,.92); font-size: 1.1rem; text-align:justify; }
+  .hero-img { border-radius: 12px; overflow: hidden; border:1px solid rgba(255,255,255,.25); }
+  .hero-img img { width:100%; height:auto; display:block; }
+
+  /* container */
+  main { max-width: 860px; margin: 0 auto; padding: 0 1.4rem 3rem; }
+
+  /* toc */
+  .toc { border:1px solid var(--line); border-radius: 12px; background: var(--surface);
+    padding: 1.2rem 1.5rem; margin: 2rem 0; }
+  .toc h2 { margin: 0 0 .8rem; font-size: 1.2rem; color: var(--navy); }
+  .toc ol { margin: 0; padding-left: 1.3rem; }
+  .toc li { margin: .35rem 0; }
+  .toc a { color: var(--accent); text-decoration: none; border-bottom: 1px dotted var(--accent); }
+  .toc a:hover { color: var(--navy); }
+
+  /* sections */
+  section { margin: 2.4rem 0; padding-top: .4rem; }
+  h2 { border-bottom: 2px solid var(--line); padding-bottom: .4rem; color: var(--navy); font-size: 1.5rem; }
+  h3 { color: var(--accent); font-size: 1.15rem; margin: 1.4rem 0 .4rem; }
+  p { margin: .6rem 0; }
+  ul, ol { margin: .5rem 0; padding-left: 1.4rem; }
+  li { margin: .3rem 0; }
+  strong { color: var(--navy); }
+
+  /* термины с подсказкой */
+  .term { border-bottom: 1px dotted var(--accent); cursor: help; color: var(--accent); }
+  .term:hover { background: var(--accent-soft); }
+  .tip-overlay { position: fixed; inset: 0; z-index: 60; background: rgba(15,32,54,.35);
+    display: none; align-items: center; justify-content: center; padding: 1.2rem; }
+  .tip-overlay.show { display: flex; }
+  .tip-box { background: var(--bg); border: 1px solid var(--line); border-radius: 12px;
+    max-width: 520px; width: 100%; box-shadow: 0 20px 50px rgba(0,20,40,.3); padding: 1.2rem 1.4rem; }
+  .tip-box .tip-title { font-family: system-ui, sans-serif; font-weight: 700; color: var(--navy); margin: 0 0 .4rem; }
+  .tip-box p { margin: .2rem 0; }
+  .tip-box button { cursor: pointer; margin-top: .8rem; background: var(--accent); color: #fff; border: none;
+    font: 600 .9rem/1 system-ui, sans-serif; border-radius: 8px; padding: .5rem 1rem; }
+
+  .note { background: var(--accent-soft); border:1px solid #cfe0ee; border-radius: 10px;
+    padding:.8rem 1rem; margin: 1rem 0; font-size: .95rem; }
+  .example { background: var(--surface); border:1px solid var(--line); border-radius: 10px;
+    padding:.8rem 1rem; margin: 1rem 0; font-size: .97rem; }
+  figure { margin: 1rem 0; text-align:center; }
+  figure .figimg { max-width: 72%; height: auto; display: inline-block; border: 1px solid var(--line);
+    border-radius: 10px; background: #fff; padding: .4rem; }
+  figure .figph { border:2px dashed var(--line); border-radius: 10px; background: var(--surface);
+    min-height: 150px; display:flex; align-items:center; justify-content:center; color: var(--muted);
+    font-size: .95rem; font-family: system-ui, sans-serif; }
+  figure .figph b { color: var(--accent); margin-right: .3rem; }
+  figcaption { margin-top: .4rem; font-size: .9rem; color: var(--navy); font-weight: 600;
+    font-family: system-ui, sans-serif; text-align:center; }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; margin: 1rem 0; }
+  th, td { border:1px solid var(--line); padding: .55rem .7rem; text-align: left; vertical-align: top; }
+  th { background: var(--accent-soft); color: var(--navy); font-weight: 700; }
+  tr:last-child td { border-bottom: 1px solid var(--line); }
+
+  /* sources */
+  .sources { margin-top: 3rem; }
+  .sources ul { list-style: none; padding: 0; }
+  .sources li { margin: .5rem 0; padding-left: 1.4rem; position: relative; }
+  .sources li::before { content: "→"; position:absolute; left:0; color: var(--accent); }
+  .sources a { color: var(--accent); text-decoration: none; border-bottom: 1px dotted var(--accent); word-break: break-word; }
+  .sources a:hover { color: var(--navy); }
+
+  /* quiz */
+  .test-cta { margin: 1.4rem 0; text-align: center; }
+  .quiz-open-btn { cursor: pointer; font: 600 1rem/1 system-ui, sans-serif; color: #fff;
+    background: var(--brand); border: none; border-radius: 10px; padding: .8rem 1.5rem;
+    box-shadow: 0 6px 18px rgba(18,58,99,.3); transition: transform .12s, box-shadow .12s, filter .12s; }
+  .quiz-open-btn:hover { transform: translateY(-2px); filter: brightness(1.08);
+    box-shadow: 0 10px 24px rgba(18,58,99,.4); }
+
+  .qz-overlay { position: fixed; inset: 0; z-index: 50; background: rgba(15,32,54,.6);
+    display: none; align-items: center; justify-content: center; padding: 1.2rem; }
+  .qz-overlay.show { display: flex; }
+  .qz-modal { background: var(--bg); border: 1px solid var(--line); border-radius: 16px;
+    max-width: 820px; width: 100%; max-height: 90vh; display: flex; flex-direction: column;
+    box-shadow: 0 30px 70px rgba(0,20,40,.35); }
+  .qz-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    padding: 1rem 1.4rem; border-bottom: 1px solid var(--line); background: var(--brand); border-radius: 16px 16px 0 0; }
+  .qz-head h2 { margin: 0; font-size: 1.25rem; color: #fff; border: none; }
+  .qz-close { cursor: pointer; background: rgba(255,255,255,.18); color: #fff; border: none;
+    font: 700 1.4rem/1 system-ui, sans-serif; border-radius: 8px; width: 38px; height: 38px; }
+  .qz-close:hover { background: rgba(255,255,255,.3); }
+  .qz-body { overflow-y: auto; padding: 1.1rem 1.4rem 1.5rem; }
+  .qz-total { color: var(--muted); font: 600 .92rem/1 system-ui, sans-serif; margin: .2rem 0 .9rem; }
+
+  .q { border: 1px solid var(--line); border-radius: 12px; padding: 1rem 1.15rem; margin: .9rem 0;
+    background: var(--surface); }
+  .q .qtext { font-weight: 700; color: var(--navy); margin: 0 0 .6rem; }
+  .q .qopt { display: block; width: 100%; text-align: left; cursor: pointer; border: 1.5px solid var(--line);
+    background: var(--bg); border-radius: 8px; padding: .6rem .85rem; margin: .4rem 0; font: inherit; color: var(--ink);
+    transition: border-color .12s, background .12s; }
+  .q .qopt:hover:not(:disabled) { border-color: var(--accent); }
+  .q .qopt:disabled { cursor: default; }
+  .q .qopt .l { font-weight: 700; color: var(--muted); margin-right: .5rem; }
+  .q .qopt.right { border-color: #1e7a4a; background: #e5f6ec; }
+  .q .qopt.wrong { border-color: #b03a3a; background: #fbeaea; }
+  .q .qexpl { display: none; margin: .6rem 0 0; padding: .7rem .9rem; border-radius: 8px;
+    font-size: .94rem; font-family: system-ui, sans-serif; }
+  .q .qexpl.show { display: block; }
+  .q .qexpl.ok { background: #e5f6ec; border: 1px solid #b6dfc4; }
+  .q .qexpl.bad { background: #fbeaea; border: 1px solid #f0bebe; }
+  .q .qexpl .head { font-weight: 800; margin-bottom: .2rem; }
+  .q .qexpl.ok .head { color: #1e7a4a; }
+  .q .qexpl.bad .head { color: #b03a3a; }
+  .qz-score { font: 700 1.05rem/1 system-ui, sans-serif; color: var(--navy); margin-top: .4rem; text-align: center; }
+  .qz-score .good { color: #1e7a4a; }
+
+  footer { border-top: 1px solid var(--line); margin-top: 2.5rem; padding-top: 1rem;
+    color: var(--muted); font-size: .85rem; }
+
+  @media (max-width: 760px){
+    .hero-inner { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 1.7rem; }
+  }
+  @media (max-width: 600px){
+    .hero { padding: 2rem 1rem 1.6rem; }
+    main { padding: 0 1rem 2rem; }
+  }
+  @media print {
+    body { color:#111; }
+    .hero { background:#fff; color:#111; border-bottom:2px solid #000; }
+    .note, .example { break-inside: avoid; }
+    section, .toc { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-text">
+      <span class="course">ДУП.03 · Основы информационных технологий</span>
+      <h1>Принципы работы компьютерных сетей</h1>
+      <p class="lead">Лекция посвящена основам построения и функционирования компьютерных сетей: рассматриваются понятие сети, её компоненты, классификация по охвату территории, топологии, сетевые протоколы и модель OSI, стек TCP/IP, а также принципы адресации устройств. Материал изложен в академическом стиле и предназначен для самостоятельного изучения.</p>
+    </div>
+    <div class="hero-img">
+      <img class="imgfit" src="img/network.png" alt="Схема компьютерной сети: устройства, объединённые коммутатором и маршрутизатором" style="width:100%; height:auto; display:block;">
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <nav class="toc">
+    <h2>Оглавление</h2>
+    <ol>
+      <li><a href="#ponyatie">Понятие и назначение компьютерной сети</a></li>
+      <li><a href="#komponenty">Компоненты и структура сети</a></li>
+      <li><a href="#klassifikaciya">Классификация сетей по охвату территории</a></li>
+      <li><a href="#topologii">Топологии компьютерных сетей</a></li>
+      <li><a href="#protokoly">Сетевые протоколы и модель OSI</a></li>
+      <li><a href="#tcpip">Стек протоколов TCP/IP</a></li>
+      <li><a href="#adresacja">Адресация устройств в сети</a></li>
+      <li><a href="#zakluchenie">Заключение</a></li>
+      <li><a href="#spravochnik">Расшифровки сокращений и определения</a></li>
+      <li><a href="#dz">Домашнее задание</a></li>
+      <li><a href="#test">Тест для самопроверки</a></li>
+      <li><a href="#istochniki">Источники</a></li>
+    </ol>
+  </nav>
+
+  <!-- 1 -->
+  <section id="ponyatie">
+    <h2>1. Понятие и назначение компьютерной сети</h2>
+    <p>Компьютерная сеть представляет собой <span class="term" data-tip="Совокупность устройств, соединённых между собой линиями связи и обменивающихся данными">совокупность вычислительных устройств</span> — компьютеров, серверов, смартфонов, принтеров и иного оборудования, — соединённых между собой кабельными линиями или средствами радиосвязи и обменивающихся данными. Объединение устройств в единую систему позволяет пользователям получать общий доступ к аппаратным и программным ресурсам, а также организовывать оперативный обмен информацией между абонентами.</p>
+    <p>Основным назначением сети является совместное использование ресурсов и передача данных. Практически все современные предприятия организуют свою работу на базе компьютерных сетей, что обеспечивает согласованную деятельность сотрудников, доступ к общим базам данных, сетевым принтерам, хранилищам и сервисам сети Интернет.</p>
+    <div class="example"><strong>Функции сетей.</strong> Обмен файлами и сообщениями; совместное использование принтеров, серверов и программного обеспечения; доступ к глобальной сети Интернет; удалённое управление устройствами; организация резервного копирования данных.</div>
+    <h3>Примеры применения сетей</h3>
+    <p>Компьютерные сети находят применение в самых разных сферах деятельности. Ниже приведены типичные сценарии использования сетей в организациях и повседневной жизни.</p>
+    <table>
+      <thead><tr><th>Сфера применения</th><th>Пример использования</th></tr></thead>
+      <tbody>
+        <tr><td style="white-space:nowrap">Корпоративный офис</td><td>работники печатают на общем сетевом принтере, получают доступ к общим базам данных и внутреннему порталу</td></tr>
+        <tr><td style="white-space:nowrap">Образование</td><td>студенты и преподаватели используют электронную библиотеку, систему дистанционного обучения и общие хранилища курсов</td></tr>
+        <tr><td style="white-space:nowrap">Медицина</td><td>медицинский персонал получает доступ к электронным картам пациентов из разных отделений; нательные датчики (BAN) передают показания в режиме реального времени</td></tr>
+        <tr><td style="white-space:nowrap">Торговля</td><td>кассы и складские терминалы объединены в единую сеть для учёта продаж и остатков</td></tr>
+        <tr><td style="white-space:nowrap">Дистанционная работа</td><td>сотрудник через VPN-канал подключается к офисным ресурсам из дома</td></tr>
+        <tr><td style="white-space:nowrap">Домашнее использование</td><td>устройства умного дома, медиа-центр, интернет-телефония и потоковое воспроизведение видео</td></tr>
+      </tbody>
+    </table>
+    <div class="note"><strong>Наблюдение:</strong> во всех перечисленных примерах сеть обеспечивает общий доступ к ресурсам и передачу данных — это и есть её главное предназначение.</div>
+  </section>
+
+  <!-- 2 -->
+  <section id="komponenty">
+    <h2>2. Компоненты и структура сети</h2>
+    <p>Для описания состава сети принято разделять её элементы на три группы: оконечные узлы, промежуточные устройства и среды передачи данных.</p>
+    <h3>Оконечные узлы</h3>
+    <p>Оконечными узлами называют устройства, которые передают и принимают данные: персональные компьютеры, серверы, телефоны, планшеты, сетевые накопители. Именно на этих узлах начинается и завершается обработка информации.</p>
+    <h3>Промежуточные устройства</h3>
+    <p>Промежуточные устройства соединяют оконечные узлы между собой и обеспечивают передачу данных по нужному маршруту. К ним относятся коммутаторы, концентраторы, маршрутизаторы, модемы и точки беспроводного доступа. Сетевая карта (<span class="term" data-tip-name="NIC" data-tip="NIC — Network Interface Card, сетевая карта; подключает устройство к сети">NIC</span>) подключает устройство к сети; коммутатор объединяет устройства внутри локальной сети; маршрутизатор управляет передачей данных между различными сетями.</p>
+    <h3>Среды передачи данных</h3>
+    <p>Среда передачи данных — это физическая или логическая среда, в которой распространяется сигнал. По медным кабелям данные передаются электрическими сигналами, по оптоволоконным линиям — световыми импульсами, в беспроводных сетях — радиоволнами. Выбор среды определяет скорость, надёжность и дальность связи.</p>
+    <h3>Сетевое оборудование и его назначение</h3>
+    <p>Для построения сети применяется специализированное оборудование, каждое устройство которого выполняет определённую функцию на своём уровне модели OSI. Ниже приведено описание основных видов сетевого оборудования.</p>
+    <table>
+      <thead><tr><th>Оборудование</th><th>Назначение</th></tr></thead>
+      <tbody>
+        <tr><td style="white-space:nowrap">Сетевая карта (NIC)</td><td>подключает устройство к сети, служит интерфейсом между компьютером и средой передачи данных</td></tr>
+        <tr><td style="white-space:nowrap">Коммутатор (switch)</td><td>соединяет узлы внутри локальной сети, передаёт данные между подключёнными устройствами по MAC-адресам</td></tr>
+        <tr><td style="white-space:nowrap">Концентратор (hub)</td><td>устаревший узел, просто транслирует сигнал всем подключённым устройствам</td></tr>
+        <tr><td style="white-space:nowrap">Маршрутизатор (router)</td><td>управляет передачей данных между различными сетями, выбирает оптимальный маршрут по IP-адресам</td></tr>
+        <tr><td style="white-space:nowrap">Модем</td><td>преобразует цифровые сигналы компьютера в сигналы линии связи и обратно (обеспечивает выход в Интернет)</td></tr>
+        <tr><td style="white-space:nowrap">Точка доступа (Access Point)</td><td>обеспечивает беспроводное подключение устройств (Wi-Fi) к локальной сети</td></tr>
+        <tr><td style="white-space:nowrap">Сервер</td><td>предоставляет сетевые ресурсы и услуги другим устройствам (базы данных, файловые хранилища, приложения)</td></tr>
+      </tbody>
+    </table>
+    <div class="note"><strong>Важно:</strong> каждое из перечисленных устройств решает собственную задачу: коммутатор организует связь внутри локальной сети, маршрутизатор — между сетями, а модем и точка доступа обеспечивают подключение к внешней или беспроводной сети.</div>
+    <div class="note"><strong>Важно:</strong> физическая топология показывает фактическое расположение устройств и кабелей, тогда как логическая топология определяет путь, по которому пакеты данных проходят между устройствами.</div>
+  </section>
+
+  <!-- 3 -->
+  <section id="klassifikaciya">
+    <h2>3. Классификация сетей по охвату территории</h2>
+    <p>Сети классифицируют по множеству признаков; одним из ключевых является территориальный охват. Различают персональные, локальные, кампусные, городские и глобальные сети.</p>
+    <table>
+      <thead><tr><th>Тип</th><th>Аббревиатура</th><th>Охват</th><th>Пример</th></tr></thead>
+      <tbody>
+        <tr><td style="white-space:nowrap">Персональная сеть</td><td>PAN</td><td>личные устройства пользователя (до 30 м)</td><td>смартфон, наушники, ноутбук</td></tr>
+        <tr><td style="white-space:nowrap">Локальная сеть</td><td>LAN</td><td>здание, офис, квартира</td><td>офисная сеть, домашний Wi-Fi</td></tr>
+        <tr><td style="white-space:nowrap">Кампусная сеть</td><td>CAN</td><td>несколько зданий (кампус, больница)</td><td>учебные корпуса университета</td></tr>
+        <tr><td style="white-space:nowrap">Городская сеть</td><td>MAN</td><td>территория города или региона</td><td>городская оптоволоконная магистраль</td></tr>
+        <tr><td style="white-space:nowrap">Глобальная сеть</td><td>WAN</td><td>страны и континенты</td><td>сеть Интернет</td></tr>
+        <tr><td style="white-space:nowrap">Виртуальная частная сеть</td><td>VPN</td><td>защищённый канал поверх физической сети</td><td>удалённый доступ сотрудника к офису</td></tr>
+      </tbody>
+    </table>
+    <p>Локальные сети (<span class="term" data-tip-name="LAN" data-tip="LAN — Local Area Network, локальная сеть; охватывает небольшую территорию: офис, здание, квартиру">LAN</span>) охватывают небольшие территории — офисы, школы, дома — и обеспечивают высокую скорость передачи данных на коротких расстояниях. Глобальные сети (<span class="term" data-tip-name="WAN" data-tip="WAN — Wide Area Network, глобальная сеть; объединяет устройства на больших расстояниях">WAN</span>) объединяют абонентов на больших расстояниях, используя оптоволоконные линии, спутниковые каналы и иные магистрали; крупнейшей глобальной сетью является Интернет. Городские сети (<span class="term" data-tip-name="MAN" data-tip="MAN — Metropolitan Area Network, городская сеть; охватывает территорию города или региона">MAN</span>) занимают промежуточное положение и охватывают территорию города. Виртуальная частная сеть (<span class="term" data-tip-name="VPN" data-tip="VPN — Virtual Private Network, виртуальная частная сеть; создаёт защищённый канал поверх физической сети">VPN</span>) создаёт защищённый виртуальный канал между клиентом и сервером поверх физической сети, применяя шифрование для защиты данных.</p>
+  </section>
+
+  <!-- 4 -->
+  <section id="topologii">
+    <h2>4. Топологии компьютерных сетей</h2>
+    <p>Топология сети — это схема соединения устройств внутри сети. Выбор топологии напрямую влияет на характеристики сети: отказоустойчивость, скорость обмена данными, стоимость и сложность монтажа.</p>
+    <h3>Шина</h3>
+    <p>Все компьютеры подключаются к единому кабелю-шине через соединительные элементы. Концы шины снабжены терминаторами, препятствующими отражению сигнала. Преимуществами являются простота монтажа и экономия кабеля; недостатками — снижение скорости при росте числа станций и потеря связи всей сети при повреждении шины.</p>
+    <figure><img class="figimg" src="img/shina.png" alt="Топология «Шина»"><figcaption>Рис. 1 — Топология «Шина»</figcaption></figure>
+    <h3>Кольцо</h3>
+    <p>Каждое устройство соединяется с двумя соседними, образуя замкнутое кольцо, по которому сигнал передаётся в одном направлении, а каждый узел выполняет роль ретранслятора. Для повышения отказоустойчивости применяют двойное кольцо. При повреждении кабеля кольцо размыкается и сеть перестаёт функционировать.</p>
+    <figure><img class="figimg" src="img/kolco.png" alt="Топология «Кольцо»"><figcaption>Рис. 2 — Топология «Кольцо»</figcaption></figure>
+    <h3>Звезда</h3>
+    <p>Все устройства подключаются к центральному узлу — коммутатору или концентратору, который выступает в роли ретранслятора. При обрыве кабеля из сети выпадает только одно устройство, однако выход из строя центрального узла парализует всю сеть. Звезда широко применяется в современных локальных сетях.</p>
+    <figure><img class="figimg" src="img/zvezda.png" alt="Топология «Звезда»"><figcaption>Рис. 3 — Топология «Звезда»</figcaption></figure>
+    <h3>Многосвязная (полносвязная) топология</h3>
+    <p>Устройства соединяются напрямую друг с другом, что обеспечивает высокую отказоустойчивость и скорость обмена данными: выход из строя одного узла не влияет на остальные. Однако из-за высокой стоимости такая топология применяется редко — преимущественно на стратегически важных объектах.</p>
+    <figure><img class="figimg" src="img/mnogosvyaznaya.png" alt="Многосвязная топология"><figcaption>Рис. 4 — Многосвязная топология</figcaption></figure>
+    <h3>Смешанная (гибридная) топология</h3>
+    <p>Комбинирует несколько видов топологий и имеет древовидную структуру. Это наиболее распространённый и отказоустойчивый вариант, используемый в средних и крупных организациях: при обрыве на одном участке остальные независимые фрагменты продолжают работать.</p>
+    <figure><img class="figimg" src="img/smeshannaya.png" alt="Смешанная топология"><figcaption>Рис. 5 — Смешанная топология</figcaption></figure>
+    <div class="example"><strong>Соответствие источникам:</strong> в рассмотренных материалах выделяются топологии «линия», «шина», «кольцо», «многосвязная» и «звезда», дополняемые смешанными схемами, что согласуется с представленной классификацией.</div>
+  </section>
+
+  <!-- 5 -->
+  <section id="protokoly">
+    <h2>5. Сетевые протоколы и модель OSI</h2>
+    <p>Для передачи информации в сети используются <span class="term" data-tip="Протокол — стандарт, определяющий правила обмена данными между устройствами в сети">протоколы</span> — стандарты, определяющие правила обмена данными между устройствами. Чтобы упорядочить взаимодействие, разработана эталонная модель взаимодействия открытых систем <span class="term" data-tip-name="OSI" data-tip="OSI — Open Systems Interconnection, модель взаимодействия открытых систем из семи уровней">OSI</span>, состоящая из семи уровней. Каждый уровень решает собственный круг задач и обслуживает уровни выше и ниже.</p>
+    <table>
+      <thead><tr><th style="text-align:right">№</th><th>Уровень</th><th>Функции</th><th>Примеры</th></tr></thead>
+      <tbody>
+        <tr><td style="text-align:right">7</td><td>Прикладной</td><td>работа сетевых приложений</td><td>HTTP, FTP, электронная почта</td></tr>
+        <tr><td style="text-align:right">6</td><td>Представления</td><td>кодирование, сжатие, шифрование</td><td>ASCII, JPEG, SSL</td></tr>
+        <tr><td style="text-align:right">5</td><td>Сеансовый</td><td>установление и управление сеансом</td><td>управление соединением</td></tr>
+        <tr><td style="text-align:right">4</td><td>Транспортный</td><td>надёжная доставка данных, порты</td><td>TCP, UDP</td></tr>
+        <tr><td style="text-align:right">3</td><td>Сетевой</td><td>логическая адресация, маршрутизация</td><td>IP, маршрутизаторы</td></tr>
+        <tr><td style="text-align:right">2</td><td>Канальный</td><td>адресация в локальной сети, контроль ошибок</td><td>Ethernet, MAC-адреса</td></tr>
+        <tr><td style="text-align:right">1</td><td>Физический</td><td>передача бит через среду</td><td>кабели, радиосигналы</td></tr>
+      </tbody>
+    </table>
+    <p>При передаче данных от приложения к устройству информация проходит сверху вниз по уровням, на каждом из которых добавляется свой заголовок — этот процесс называется <span class="term" data-tip="Инкапсуляция — процесс последовательного добавления заголовков к данным при передаче по уровням модели">инкапсуляцией</span>. Принимающее устройство проделывает обратный путь снизу вверх, снимая заголовки, — <span class="term" data-tip="Деинкапсуляция — обратный процесс снятия заголовков при приёме данных">деинкапсуляцией</span>. Данные на разных уровнях называют по-разному: на транспортном — сегментами, на сетевом — пакетами, на канальном — кадрами.</p>
+    <p>Следует отметить, что модель OSI в настоящее время используется главным образом в учебных целях; фактическим стандартом организации сетей выступает стек протоколов TCP/IP.</p>
+  </section>
+
+  <!-- 6 -->
+  <section id="tcpip">
+    <h2>6. Стек протоколов TCP/IP</h2>
+    <p>Стек <span class="term" data-tip-name="TCP/IP" data-tip="TCP/IP — Transmission Control Protocol / Internet Protocol, стек протоколов — основа сети Интернет">TCP/IP</span> является основой сети Интернет и объединяет семейство протоколов, отвечающих за адресацию и передачу данных. В отличие от семиуровневой модели OSI, стек TCP/IP содержит меньше уровней: прикладной, транспортный, интернет-уровень (сетевой) и уровень сетевого доступа. Три верхних уровня OSI здесь объединены в один прикладной, а канальный и физический — в уровень сетевого доступа.</p>
+    <p>Ключевые протоколы стека: <strong>IP</strong> (Internet Protocol) — логическая адресация и маршрутизация пакетов; <strong>TCP</strong> (Transmission Control Protocol) — надёжная передача данных с установлением соединения и контролем доставки; <strong>UDP</strong> (User Datagram Protocol) — быстрая передача без установления соединения; <strong>HTTP/HTTPS</strong> — передача веб-данных; <strong>FTP</strong> — передача файлов; <strong>SMTP, IMAP, POP3</strong> — работа с электронной почтой.</p>
+    <div class="note"><strong>Выбор транспортного протокола:</strong> TCP применяется, когда требуется гарантированная доставка (веб, почта, файлы), а UDP — когда важна скорость и допустимы потери части данных (потоковое видео, IP-телефония, онлайн-игры).</div>
+  </section>
+
+  <!-- 7 -->
+  <section id="adresacja">
+    <h2>7. Адресация устройств в сети</h2>
+    <p>Для того чтобы данные дошли до нужного получателя, каждое устройство в сети должно иметь адрес. Используется два основных типа адресов: физический и логический.</p>
+    <p>Физический (<span class="term" data-tip-name="MAC" data-tip="MAC — Media Access Control, физический адрес сетевого устройства, присваивается на заводе">MAC</span>) адрес присваивается сетевому устройству на заводе-изготовителе и используется для адресации в пределах локальной сети. Логический (<span class="term" data-tip-name="IP" data-tip="IP — Internet Protocol, логический адрес устройства в сети">IP</span>) адрес назначается устройству, чтобы идентифицировать его в сети; классический формат IPv4 представляет собой четыре числа, разделённые точками, например 192.168.1.1. Для связи между разными сетями применяется маршрутизация на основе IP-адресов.</p>
+    <p>Поскольку человеку запоминать числовые адреса сложно, используется система доменных имён (<span class="term" data-tip-name="DNS" data-tip="DNS — Domain Name System, система доменных имён; переводит имена в IP-адреса">DNS</span>), которая преобразует удобные имена, например «google.com», в соответствующие IP-адреса.</p>
+    <div class="example"><strong>Пример из практики.</strong> При вводе в браузере доменного имени DNS-сервер возвращает IP-адрес сайта, затем данные упаковываются по уровням стека TCP/IP и доставляются по сети к устройству получателя, где выполняются обратные преобразования.</div>
+  </section>
+
+  <!-- 8 -->
+  <section id="zakluchenie">
+    <h2>8. Заключение</h2>
+    <p>Принципы работы компьютерных сетей образуют фундамент современных информационных технологий. Изученные понятия — компоненты сети, классификация по охвату, топологии, протоколы и модели, а также адресация — позволяют понимать, каким образом данные передаются между устройствами и как организовано взаимодействие в глобальной сети Интернет. Знание этих основ необходимо для дальнейшего изучения сетевых технологий, администрирования и разработки распределённых систем.</p>
+    <p>Развитие сетевых технологий продолжается: повышаются скорости передачи, совершенствуются протоколы и повышается надёжность и безопасность сетей, что определяет актуальность рассмотренной темы.</p>
+  </section>
+
+  <!-- Справочник сокращений -->
+  <section id="spravochnik">
+    <h2>9. Расшифровки сокращений и определения</h2>
+    <p>В тексте лекции сокращения и ключевые термины выделены подчёркиванием пунктиром и раскрываются при наведении курсора: появится окно с расшифровкой или определением соответствующего понятия.</p>
+    <p><em>Примечание.</em> Если окно не отображается, воспользуйтесь настольной версией браузера либо перейдите по ссылкам в разделе «Источники», где понятия раскрываются подробно.</p>
+  </section>
+
+  <!-- Домашнее задание -->
+  <section id="dz">
+    <h2>10. Домашнее задание</h2>
+    <p>Изучить принципы организации компьютерных сетей: виды сетей (локальные и глобальные), топологии и современную структуру сети. Для закрепления материала составьте <strong>схему классификации сетей</strong> и подготовьте письменные ответы на контрольные вопросы.</p>
+    <h3>Контрольные вопросы</h3>
+    <ol>
+      <li>Что называется компьютерной сетью и каково её основное назначение?</li>
+      <li>Какие виды сетей выделяют по охвату территории? Приведите примеры каждого вида.</li>
+      <li>Чем локальная сеть (LAN) отличается от глобальной сети (WAN)? Укажите не менее трёх отличий.</li>
+      <li>Назовите основные топологии сетей и охарактеризуйте достоинства и недостатки каждой из них.</li>
+      <li>Что представляет собой топология «звезда» и где она применяется?</li>
+      <li>Какие компоненты входят в состав сети и какую роль выполняет каждое устройство?</li>
+      <li>Чем физическая топология отличается от логической?</li>
+      <li>Для чего служит модель OSI и из каких уровней она состоит?</li>
+      <li>В чём различие между протоколами TCP и UDP?</li>
+      <li>Что такое IP-адрес и MAC-адрес, чем они различаются?</li>
+      <li>Какую функцию выполняет система доменных имён (DNS)?</li>
+      <li>Какие устройства относятся к оконечным узлам, а какие — к промежуточным?</li>
+      <li>Что такое виртуальная частная сеть (VPN) и для чего она применяется?</li>
+      <li>Каковы функции канального и сетевого уровней модели OSI?</li>
+      <li>Опишите процесс передачи данных от приложения получателю (инкапсуляцию).</li>
+    </ol>
+    <div class="note"><strong>Рекомендация.</strong> При ответе на вопросы опирайтесь на материалы лекции и приведённые источники; каждое утверждение поясняйте примером.</div>
+  </section>
+
+  <!-- Тест -->
+  <section id="test">
+    <h2>11. Тест для самопроверки</h2>
+    <p>Пройти интерактивный тест из 15 вопросов по материалам лекции. После выбора каждого ответа выводится пояснение, а в конце — итоговый результат.</p>
+    <div class="test-cta">
+      <button id="openQuiz" class="quiz-open-btn">Открыть тест для самопроверки</button>
+    </div>
+  </section>
+
+  <!-- 9 -->
+  <section id="istochniki" class="sources">
+    <h2>Источники</h2>
+    <p>Материал лекции подготовлен на основе следующих публикаций:</p>
+    <ul>
+      <li>LanFix — <a href="https://lanfix.ru/clauses/principy-postroenija-kompjuternyh-setej/" target="_blank" rel="noopener">Принципы построения компьютерных сетей и их отличия</a></li>
+      <li>Хабр — <a href="https://habr.com/ru/articles/307252/" target="_blank" rel="noopener">Основы компьютерных сетей. Основные сетевые термины и сетевые модели</a></li>
+      <li>АйТи Спектр — <a href="https://spb.itspectr.ru/kompyuternaya-set-osnovnye-vidy-i-princzipy/" target="_blank" rel="noopener">Компьютерная сеть — основные виды и принципы</a></li>
+      <li>Хекслет — <a href="https://ru.hexlet.io/blog/posts/kompyuternaya-set-chto-eto-takoe-osnovnye-printsipy" target="_blank" rel="noopener">Компьютерная сеть: что это такое, основные принципы</a></li>
+    </ul>
+  </section>
+
+  <footer>
+    ДУП.03 «Основы информационных технологий» · Тема: принципы работы компьютерных сетей. Материал для самостоятельного изучения, подготовлен в академическом стиле. Сформировано 30.09.2026.
+  </footer>
+
+</main>
+
+<!-- Модалка подсказки термина/сокращения -->
+<div class="tip-overlay" id="tipOverlay">
+  <div class="tip-box" role="dialog" aria-modal="true">
+    <p class="tip-title" id="tipTitle">Пояснение</p>
+    <p id="tipBody"></p>
+    <button id="tipClose">Закрыть</button>
+  </div>
+</div>
+
+<!-- ============ Модальное окно теста ============ -->
+<div class="qz-overlay" id="qzOverlay">
+  <div class="qz-modal" role="dialog" aria-modal="true" aria-labelledby="qzTitle">
+    <div class="qz-head">
+      <h2 id="qzTitle">Тест для самопроверки</h2>
+      <button class="qz-close" id="qzClose" aria-label="Закрыть">×</button>
+    </div>
+    <div class="qz-body">
+      <p class="qz-total">Тест состоит из 15 вопросов. После выбора ответа появляется пояснение; в конце выводится итог.</p>
+
+      <div class="q"><p class="qtext">1. Что такое компьютерная сеть?</p>
+        <button class="qopt" data-ok="true" onclick="qz(this)"><span class="l">А.</span>Совокупность устройств, соединённых линиями связи и обменивающихся данными</button>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">Б.</span>Единый компьютер с несколькими пользователями</button>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">В.</span>Только кабельные соединения между ПК</button>
+        <div class="qexpl"><p class="head">Пояснение</p><p>Компьютерная сеть — совокупность устройств, соединённых кабельными линиями или радиосвязью и обменивающихся данными.</p></div>
+      </div>
+
+      <div class="q"><p class="qtext">2. Что охватывает локальная сеть (LAN)?</p>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">А.</span>Территорию города</button>
+        <button class="qopt" data-ok="true" onclick="qz(this)"><span class="l">Б.</span>Небольшое пространство: офис, школу, здание</button>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">В.</span>Разные страны и континенты</button>
+        <div class="qexpl"><p class="head">Пояснение</p><p>LAN охватывает небольшие территории (офис, школа, здание) и обеспечивает высокую скорость связи.</p></div>
+      </div>
+
+      <div class="q"><p class="qtext">3. Какая сеть объединяет абонентов на больших расстояниях и является примером глобальной сети?</p>
+        <button class="qopt" data-ok="true" onclick="qz(this)"><span class="l">А.</span>Интернет (WAN)</button>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">Б.</span>Домашняя сеть Wi-Fi</button>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">В.</span>Офисная локальная сеть</button>
+        <div class="qexpl"><p class="head">Пояснение</p><p>Интернет — крупнейшая глобальная сеть (WAN), охватывающая страны и континенты.</p></div>
+      </div>
+
+      <div class="q"><p class="qtext">4. Какая топология предполагает подключение всех устройств к центральному узлу?</p>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">А.</span>Шина</button>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">Б.</span>Кольцо</button>
+        <button class="qopt" data-ok="true" onclick="qz(this)"><span class="l">В.</span>Звезда</button>
+        <div class="qexpl"><p class="head">Пояснение</p><p>В топологии «звезда» все устройства подключаются к центральному узлу (коммутатору или концентратору).</p></div>
+      </div>
+
+      <div class="q"><p class="qtext">5. Сколько уровней содержит модель OSI?</p>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">А.</span>Пять</button>
+        <button class="qopt" data-ok="true" onclick="qz(this)"><span class="l">Б.</span>Семь</button>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">В.</span>Четыре</button>
+        <div class="qexpl"><p class="head">Пояснение</p><p>Модель OSI состоит из семи уровней — от физического до прикладного.</p></div>
+      </div>
+
+      <div class="q"><p class="qtext">6. Какой протокол обеспечивает надёжную доставку данных с установлением соединения?</p>
+        <button class="qopt" data-ok="true" onclick="qz(this)"><span class="l">А.</span>TCP</button>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">Б.</span>UDP</button>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">В.</span>HTTP</button>
+        <div class="qexpl"><p class="head">Пояснение</p><p>TCP обеспечивает надёжную передачу с установлением соединения и контролем доставки.</p></div>
+      </div>
+
+      <div class="q"><p class="qtext">7. Что такое IP-адрес?</p>
+        <button class="qopt" data-ok="true" onclick="qz(this)"><span class="l">А.</span>Логический адрес устройства в сети</button>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">Б.</span>Физический адрес, присвоенный на заводе</button>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">В.</span>Имя устройства в системе DNS</button>
+        <div class="qexpl"><p class="head">Пояснение</p><p>IP-адрес — логический адрес, обеспечивающий идентификацию и маршрутизацию устройства в сети.</p></div>
+      </div>
+
+      <div class="q"><p class="qtext">8. Для чего используется MAC-адрес?</p>
+        <button class="qopt" data-ok="true" onclick="qz(this)"><span class="l">А.</span>Для адресации устройств в пределах локальной сети</button>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">Б.</span>Для доступа в сеть Интернет</button>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">В.</span>Для перевода доменных имён</button>
+        <div class="qexpl"><p class="head">Пояснение</p><p>MAC-адрес — физический адрес, используемый для адресации в пределах локальной сети.</p></div>
+      </div>
+
+      <div class="q"><p class="qtext">9. Какую функцию выполняет маршрутизатор?</p>
+        <button class="qopt" data-ok="true" onclick="qz(this)"><span class="l">А.</span>Управляет передачей данных между различными сетями</button>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">Б.</span>Обеспечивает питание устройств</button>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">В.</span>Хранит резервные копии файлов</button>
+        <div class="qexpl"><p class="head">Пояснение</p><p>Маршрутизатор управляет передачей данных между сетями, выбирая оптимальный маршрут.</p></div>
+      </div>
+
+      <div class="q"><p class="qtext">10. На каком уровне модели OSI работает протокол IP?</p>
+        <button class="qopt" data-ok="true" onclick="qz(this)"><span class="l">А.</span>На сетевом</button>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">Б.</span>На транспортном</button>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">В.</span>На канальном</button>
+        <div class="qexpl"><p class="head">Пояснение</p><p>Протокол IP работает на сетевом уровне, обеспечивая логическую адресацию и маршрутизацию.</p></div>
+      </div>
+
+      <div class="q"><p class="qtext">11. Какая система переводит доменные имена в IP-адреса?</p>
+        <button class="qopt" data-ok="true" onclick="qz(this)"><span class="l">А.</span>DNS</button>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">Б.</span>FTP</button>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">В.</span>HTTP</button>
+        <div class="qexpl"><p class="head">Пояснение</p><p>Система доменных имён (DNS) преобразует доменные имена в IP-адреса.</p></div>
+      </div>
+
+      <div class="q"><p class="qtext">12. Как расшифровывается аббревиатура VPN?</p>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">А.</span>Virtual Private Node</button>
+        <button class="qopt" data-ok="true" onclick="qz(this)"><span class="l">Б.</span>Virtual Private Network</button>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">В.</span>Very Protected Network</button>
+        <div class="qexpl"><p class="head">Пояснение</p><p>VPN (Virtual Private Network) — виртуальная частная сеть, создающая защищённый канал.</p></div>
+      </div>
+
+      <div class="q"><p class="qtext">13. Какой протокол предназначен для передачи файлов?</p>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">А.</span>SMTP</button>
+        <button class="qopt" data-ok="true" onclick="qz(this)"><span class="l">Б.</span>FTP</button>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">В.</span>POP3</button>
+        <div class="qexpl"><p class="head">Пояснение</p><p>Протокол FTP (File Transfer Protocol) служит для передачи файлов.</p></div>
+      </div>
+
+      <div class="q"><p class="qtext">14. Какая сеть охватывает территорию города?</p>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">А.</span>LAN</button>
+        <button class="qopt" data-ok="true" onclick="qz(this)"><span class="l">Б.</span>MAN</button>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">В.</span>PAN</button>
+        <div class="qexpl"><p class="head">Пояснение</p><p>Городская сеть (MAN, Metropolitan Area Network) охватывает территорию города или региона.</p></div>
+      </div>
+
+      <div class="q"><p class="qtext">15. Что происходит при деинкапсуляции данных?</p>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">А.</span>Добавление заголовков на каждом уровне</button>
+        <button class="qopt" data-ok="true" onclick="qz(this)"><span class="l">Б.</span>Последовательное снятие заголовков на принимающем устройстве</button>
+        <button class="qopt" data-ok="false" onclick="qz(this)"><span class="l">В.</span>Отправка данных без адресации</button>
+        <div class="qexpl"><p class="head">Пояснение</p><p>Деинкапсуляция — процесс снятия заголовков при приёме данных на принимающем устройстве.</p></div>
+      </div>
+
+      <p class="qz-score" id="qzScore"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* Подсказки по терминам и сокращениям */
+  var tipOverlay = document.getElementById('tipOverlay');
+  var tipTitle = document.getElementById('tipTitle');
+  var tipBody = document.getElementById('tipBody');
+  document.querySelectorAll('.term').forEach(function(el){
+    el.addEventListener('click', function(e){
+      e.preventDefault();
+      tipTitle.textContent = el.getAttribute('data-tip-name') || 'Пояснение';
+      tipBody.textContent = el.getAttribute('data-tip');
+      tipOverlay.classList.add('show');
+    });
+  });
+  document.getElementById('tipClose').addEventListener('click', function(){ tipOverlay.classList.remove('show'); });
+  tipOverlay.addEventListener('click', function(e){ if (e.target === tipOverlay) tipOverlay.classList.remove('show'); });
+
+  var overlay = document.getElementById('qzOverlay');
+  document.getElementById('openQuiz').addEventListener('click', function(){ overlay.classList.add('show'); });
+  document.getElementById('qzClose').addEventListener('click', function(){ overlay.classList.remove('show'); });
+  overlay.addEventListener('click', function(e){ if (e.target === overlay) overlay.classList.remove('show'); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') overlay.classList.remove('show'); });
+
+  var qzTotal = 15, qzDone = 0, qzScore = 0;
+  function qz(btn){
+    var q = btn.closest('.q');
+    if (q.classList.contains('qdone')) return;
+    q.classList.add('qdone');
+    var ok = btn.getAttribute('data-ok') === 'true';
+    var opts = q.querySelectorAll('.qopt');
+    opts.forEach(function(o){ o.disabled = true; });
+    var expl = q.querySelector('.qexpl');
+    if (ok){ qzScore++; expl.classList.add('ok'); expl.querySelector('.head').textContent = 'Верно.';
+      opts.forEach(function(o){ if(o.getAttribute('data-ok')==='true') o.classList.add('right'); });
+    } else {
+      expl.classList.add('bad'); expl.querySelector('.head').textContent = 'Неверно. Правильный ответ подсвечен.';
+      opts.forEach(function(o){ if(o.getAttribute('data-ok')==='true') o.classList.add('right'); });
+      btn.classList.add('wrong');
+    }
+    expl.classList.add('show');
+    qzDone++;
+    if (qzDone === qzTotal){ printQzScore(); }
+    updateQzProgress();
+  }
+  function updateQzProgress(){
+    var total = document.querySelector('.qz-total');
+    total.textContent = 'Отвечено: ' + qzDone + ' из ' + qzTotal + ' вопросов.';
+  }
+  function printQzScore(){
+    var el = document.getElementById('qzScore');
+    var pct = Math.round(qzScore / qzTotal * 100);
+    var verdict = pct >= 80 ? 'Отлично' : (pct >= 60 ? 'Хорошо' : (pct >= 40 ? 'Удовлетворительно' : 'Требуется повторение материала'));
+    el.innerHTML = 'Ваш результат: <span class="good">' + qzScore + ' из ' + qzTotal + '</span> (' + pct + '%). Оценка: ' + verdict + '.';
+  }
+</script>
+
+</body>
+</html>
